@@ -11,7 +11,7 @@
 - 🔐 **Secure user authentication**
 - 📱 **Responsive design for all devices**
 
-![GeoRisk Nexus Dashboard](https://via.placeholder.com/800x400?text=GeoRisk+Nexus+Dashboard)
+
 
 ---
 

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EcoRisk AI - Smart City Climate Risk Forecast</title>
+   
+
+    <link rel="stylesheet" href="style.css" />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Roboto:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Cesium.js"></script>
+
+    <!-- Chart.js (Online) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- jsPDF (Online) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Leaflet (2D Map, Online) -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    
+    
+  </head>
+  <body>
+    <!-- Header with Logo and Navigation -->
+    <header>
+      
+
+      <div class="logo-text">
+    <img src="img1.png" alt="Logo" />
+    GEORISK<span>NEXUS</span>
+  </div>
+  <nav>
+    <ul>
+      <li><a href="#" class="active">Dashboard</a></li>
+      <li><a href="#">Predictions</a></li>
+      <li><a href="#">City Data</a></li>
+      <li><a href="#">Alerts</a></li>
+          <li> <div class="user-controls">
+  <button id="logoutBtn" class="btn logout-btn" style="margin-left: 20px;">
+    <i class="fas fa-sign-out-alt"></i> Logout
+  </button></li>
+        </ul>
+      </nav>
+     
+  &nbsp;<div class="welcome-text">Welcome, <span id="userGreeting"></span>!</div>
+
+</div>
+
+    </header>
+
+    <!-- Dashboard -->
+    <div class="dashboard">
+      <h1 class="dashboard-title">Smart City Climate Risk Forecast</h1>
+
+      <div class="search-container">
+        <div class="search-box">
+          <input
+            id="locationInput"
+            type="text"
+            placeholder="Enter city name or PIN code..."
+          />
+          <button onclick="searchLocation()">
+            <i class="fas fa-search"></i> Analyze Risk
+          </button>
+        </div>
+      </div>
+
+      <div class="map-container">
+        <div class="map-header">
+          <div class="map-title" id="mapTitle">Climate Risk Visualization</div>
+
+          <div class="map-toggles">
+            <button class="map-toggle active" onclick="showMap('2d')">
+              2D Map
+            </button>
+            <button class="map-toggle" ><a href="cesium.html">3D Map </a></button>
+          </div>
+        </div>
+        <div class="map-content">
+          <!-- 2D Leaflet Map -->
+          <div
+            id="leafletMap"
+            style="height: 400px; width: 100%; border-radius: 10px"
+          ></div>
+
+          <!-- 3D Cesium Map -->
+       
+<div
+  id="cesiumContainer"
+  style="height: 400px; width: 100%; display: none; border-radius: 10px"
+></div>
+
+        </div>
+
+        <!-- Legend -->
+        <div
+          style="
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 8px">
+            <div
+              style="
+                width: 20px;
+                height: 20px;
+                background: #91f291;
+                border-radius: 4px;
+              "
+            ></div>
+            <span>Low Risk</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <div
+              style="
+                width: 20px;
+                height: 20px;
+                background: #ffe680;
+                border-radius: 4px;
+              "
+            ></div>
+            <span>Moderate Risk</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <div
+              style="
+                width: 20px;
+                height: 20px;
+                background: #ff4c4c;
+                border-radius: 4px;
+              "
+            ></div>
+            <span>High Risk</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="risk-indicators">
+        <div class="risk-card safe">
+          <div class="risk-icon">
+            <i class="fas fa-fire"></i>
+          </div>
+          <h3 class="risk-title">Heatwave Risk</h3>
+          <div class="risk-level safe">Low</div>
+          <p class="risk-description">
+            Temperatures expected to remain below 40°C
+          </p>
+        </div>
+
+        <div class="risk-card high">
+          <div class="risk-icon">
+            <i class="fas fa-water"></i>
+          </div>
+          <h3 class="risk-title">Flood Risk</h3>
+          <div class="risk-level high">High</div>
+          <p class="risk-description">
+            Heavy rainfall predicted with flood risk in low-lying areas
+          </p>
+        </div>
+
+        <div class="risk-card moderate">
+          <div class="risk-icon">
+            <i class="fas fa-wind"></i>
+          </div>
+          <h3 class="risk-title">Air Quality</h3>
+          <div class="risk-level moderate">Moderate</div>
+          <p class="risk-description">
+            AQI 105 - Sensitive groups should reduce outdoor activity
+          </p>
+        </div>
+      </div>
+
+      <div class="forecast-container">
+        <h2 class="section-title">7-Day Risk Forecast</h2>
+        <div class="chart-container">
+          <canvas id="forecastChart"></canvas>
+        </div>
+      </div>
+
+      <div class="alert-container">
+        <div class="alert-header">
+          <i class="fas fa-exclamation-triangle alert-icon"></i>
+          <h3 class="alert-title">URGENT ALERT</h3>
+        </div>
+        <div class="alert-content">
+          <p>
+            🔴 High probability of urban flooding in Kurla and Dharavi areas
+            from June 26-27.
+          </p>
+          <p>• Expected rainfall: 220mm over 48 hours</p>
+          <p>• Avoid low-lying roads and areas near drainage systems</p>
+          <p>• Emergency shelters activated in Bandra and Andheri</p>
+        </div>
+      </div>
+
+      <div class="action-container">
+        <button class="action-btn">
+          <i class="fas fa-download"></i> Download Risk Report
+        </button>
+        <button class="action-btn">
+          <i class="fas fa-bell"></i> Setup Alerts
+        </button>
+        <button class="action-btn">
+          <i class="fas fa-share-alt"></i> Share with Authorities
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-content">
+        <div class="footer-column">
+          <h4 class="footer-title">EcoRisk AI</h4>
+          <p>
+            AI-powered climate risk forecasting for smarter, more resilient
+            cities. Predicting floods, heatwaves, and air quality issues 7 days
+            in advance.
+          </p>
+
+          <div class="tech-stack">
+            <div class="tech-item">LSTM AI Models</div>
+            <div class="tech-item">Satellite Data</div>
+            <div class="tech-item">Real-time APIs</div>
+            <div class="tech-item">Geospatial Analysis</div>
+          </div>
+        </div>
+
+        <div class="footer-column">
+          <h4 class="footer-title">Data Sources</h4>
+          <ul class="footer-links">
+            <li>Copernicus Climate Data</li>
+            <li>NASA Earth Observations</li>
+            <li>OpenWeatherMap API</li>
+            <li>National Disaster Management</li>
+            <li>Urban Infrastructure Data</li>
+          </ul>
+        </div>
+
+        <div class="footer-column">
+          <h4 class="footer-title">Cities Covered</h4>
+          <ul class="footer-links">
+            <li>Mumbai</li>
+            <li>Delhi</li>
+            <li>Chennai</li>
+            <li>Kolkata</li>
+            <li>Bangalore</li>
+            <li>Hyderabad</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="copyright">
+        <p>
+          &copy; 2023 EcoRisk AI | Smart City Climate Risk Forecasting System |
+          Hackathon Project
+        </p>
+      </div>
+    </footer>
+    <script src="script.js"></script>
+    <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", function () {
+        localStorage.removeItem("currentUser");
+        window.location.href = "home.html"; // Redirect to your login page
+      });
+    }
+
+    // Optional: Restrict access if not logged in
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (!currentUser) {
+      window.location.href = "login.html"; // Block access if not authenticated
+    }
+
+    // Optional: Show user’s name
+    const usernamePlaceholder = document.getElementById("userGreeting");
+    if (usernamePlaceholder && currentUser) {
+      usernamePlaceholder.textContent = currentUser.name;
+    }
+  });
+</script>
+
+  </body>
+</html>

@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Login System</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #184d23, #a4c1ad);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            max-width: 900px;
+            width: 100%;
+            background: #fff;
+            border-radius: 15px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .illustration {
+            flex: 1;
+            background: linear-gradient(to bottom right, #184d23, #1c3123);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            color: white;
+            text-align: center;
+        }
+
+        .illustration h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .illustration p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .illustration img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+        }
+
+        .form-container {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .form-box {
+            width: 100%;
+        }
+
+        .form-box h2 {
+            font-size: 28px;
+            color: #1c3123;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .input-with-icon {
+            position: relative;
+        }
+
+        .input-with-icon i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #777;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 20px 14px 45px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #25412e;
+            box-shadow: 0 0 0 3px rgba(78, 84, 200, 0.2);
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            background: #1c3123;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+         .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .toggle-text {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+
+        .toggle-text a {
+            color: #1c3123;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .toggle-text a:hover {
+            text-decoration: underline;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #777;
+        }
+
+        .dashboard {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .dashboard h2 {
+            font-size: 32px;
+            color: #1c3123;
+            margin-bottom: 20px;
+        }
+
+        .dashboard p {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .user-info {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .user-info h3 {
+            color: #1c3123;
+            margin-bottom: 15px;
+        }
+
+        .user-detail {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .user-detail label {
+            font-weight: 600;
+            width: 120px;
+            color: #555;
+        }
+
+        .logout-btn {
+            background: #ff6b6b;
+        }
+
+        .logout-btn:hover {
+            background: #ff5252;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .illustration {
+                padding: 30px 20px;
+            }
+            
+            .form-container {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="illustration">
+            <h2>Welcome to GeoRisk Nexus</h2>
+            <p>Your trusted platform for secure authentication. Sign up now to access exclusive features and manage your account securely.</p>
+            <div class="animation">
+                <img src="/img1.png" style="height: 150px; display: block; margin: 0 auto;">
+
+            </div>
+            <p>All your data is securely stored locally on your device. We never send your information to any servers.</p>
+        </div>
+        
+        <div class="form-container">
+            <!-- Login Form -->
+            <div class="form-box" id="loginForm">
+                <h2>Login to Your Account</h2>
+                <div class="message error" id="loginError">Invalid username or password</div>
+                
+                <form id="loginFormElement">
+                    <div class="form-group">
+                        <label for="loginUsername">Username</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="loginUsername" class="form-control" placeholder="Enter your username" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="loginPassword" class="form-control" placeholder="Enter your password" required>
+                            <span class="password-toggle" id="loginPasswordToggle">
+                                
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn">Login</button>
+                </form>
+                
+                <div class="toggle-text">
+                    Don't have an account? <a id="showSignup">Sign Up</a>
+                </div>
+            </div>
+            
+            <!-- Signup Form -->
+            <div class="form-box" id="signupForm" style="display: none;">
+                <h2>Create New Account</h2>
+                <div class="message success" id="signupSuccess">Account created successfully!</div>
+                <div class="message error" id="signupError">Username already exists or passwords don't match</div>
+                
+                <form id="signupFormElement">
+                    <div class="form-group">
+                        <label for="signupName">Full Name</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="signupName" class="form-control" placeholder="Enter your full name" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signupEmail">Email</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="signupEmail" class="form-control" placeholder="Enter your email" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signupUsername">Username</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-at"></i>
+                            <input type="text" id="signupUsername" class="form-control" placeholder="Choose a username" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signupPassword">Password</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="signupPassword" class="form-control" placeholder="Create a password" required>
+                            <span class="password-toggle" id="signupPasswordToggle">
+                              
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signupConfirmPassword">Confirm Password</label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="signupConfirmPassword" class="form-control" placeholder="Confirm your password" required>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn">Sign Up</button>
+                </form>
+                
+                <div class="toggle-text">
+                    Already have an account? <a id="showLogin">Login</a>
+                </div>
+            </div>
+            
+            <!-- Dashboard -->
+            <div class="dashboard" id="dashboard">
+                <h2>Welcome, <span id="dashboardName">User</span>!</h2>
+                <p>You have successfully logged in to your account.</p>
+                
+                <div class="user-info">
+                    <h3>Your Account Information</h3>
+                    <div class="user-detail">
+                        <label>Full Name:</label>
+                        <span id="infoName"></span>
+                    </div>
+                    <div class="user-detail">
+                        <label>Email:</label>
+                        <span id="infoEmail"></span>
+                    </div>
+                    <div class="user-detail">
+                        <label>Username:</label>
+                        <span id="infoUsername"></span>
+                    </div>
+                </div>
+                
+                <!-- <button class="btn logout-btn" id="logoutBtn">Logout</button> -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Auto-redirect if user is already logged in (even on refresh)
+    if (localStorage.getItem('currentUser')) {
+        window.location.href = "index.html";
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Elements
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const dashboard = document.getElementById('dashboard');
+        const showSignup = document.getElementById('showSignup');
+        const showLogin = document.getElementById('showLogin');
+        const loginFormElement = document.getElementById('loginFormElement');
+        const signupFormElement = document.getElementById('signupFormElement');
+
+        // Message elements
+        const loginError = document.getElementById('loginError');
+        const signupSuccess = document.getElementById('signupSuccess');
+        const signupError = document.getElementById('signupError');
+
+        // Password toggles
+        const loginPasswordToggle = document.getElementById('loginPasswordToggle');
+        const signupPasswordToggle = document.getElementById('signupPasswordToggle');
+
+        // Dashboard elements
+        const dashboardName = document.getElementById('dashboardName');
+        const infoName = document.getElementById('infoName');
+        const infoEmail = document.getElementById('infoEmail');
+        const infoUsername = document.getElementById('infoUsername');
+
+        // Toggle password icons
+     
+        // Form toggle
+        showSignup.onclick = (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            signupForm.style.display = 'block';
+            resetMessages();
+        };
+
+        showLogin.onclick = (e) => {
+            e.preventDefault();
+            signupForm.style.display = 'none';
+            loginForm.style.display = 'block';
+            resetMessages();
+        };
+
+        // Submit login
+        loginFormElement.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const user = users.find(u => u.username === username && u.password === password);
+
+            if (user) {
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                window.location.href = "index.html";
+            } else {
+                showMessage(loginError);
+            }
+        });
+
+        // Submit signup
+        signupFormElement.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const username = document.getElementById('signupUsername').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('signupConfirmPassword').value;
+
+            if (password !== confirmPassword) {
+                signupError.textContent = "Passwords do not match!";
+                showMessage(signupError);
+                return;
+            }
+
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            const usernameExists = users.some(u => u.username === username);
+
+            if (usernameExists) {
+                signupError.textContent = "Username already exists!";
+                showMessage(signupError);
+                return;
+            }
+
+            const newUser = { name, email, username, password };
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+
+            // Success – show login form
+            showMessage(signupSuccess);
+            setTimeout(() => {
+                signupForm.style.display = 'none';
+                loginForm.style.display = 'block';
+                signupFormElement.reset();
+            }, 1500);
+        });
+
+        // Enter key support
+        loginFormElement.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                loginFormElement.querySelector(".btn").click();
+            }
+        });
+
+        signupFormElement.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                signupFormElement.querySelector(".btn").click();
+            }
+        });
+
+        // Toggle password visibility
+        loginPasswordToggle.addEventListener('click', function () {
+            togglePassword('loginPassword', this);
+        });
+
+        signupPasswordToggle.addEventListener('click', function () {
+            togglePassword('signupPassword', this);
+        });
+
+        function togglePassword(inputId, toggleElement) {
+            const input = document.getElementById(inputId);
+            const icon = toggleElement.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        function showMessage(element) {
+            resetMessages();
+            element.style.display = 'block';
+            element.style.opacity = 0;
+            element.style.transition = 'opacity 0.3s ease-in-out';
+            requestAnimationFrame(() => {
+                element.style.opacity = 1;
+            });
+            setTimeout(() => {
+                element.style.opacity = 0;
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 300);
+            }, 3000);
+        }
+
+        function resetMessages() {
+            [loginError, signupError, signupSuccess].forEach(el => {
+                el.style.display = 'none';
+                el.style.opacity = 0;
+            });
+        }
+    });
+</script>
+
+</body>
+</html>

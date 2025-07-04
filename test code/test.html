@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GeoRisk Globe Visualization</title>
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #1a2e19 0%, #2c5a2d 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      color: #e0f7e0;
+    }
+    
+    #cesiumContainer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    
+    .app-container {
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    .header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 20px 40px;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(15, 28, 15, 0.8);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(100, 200, 100, 0.2);
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .logo-icon i {
+      font-size: 24px;
+    }
+    
+    .logo-text {
+      font-size: 24px;
+      font-weight: 700;
+      background: linear-gradient(to right, #a8ff78, #78ffd6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+    }
+    
+    .search-container {
+      display: flex;
+      width: 400px;
+      background: rgba(20, 40, 20, 0.7);
+      border-radius: 50px;
+      overflow: hidden;
+      border: 1px solid rgba(100, 200, 100, 0.3);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    #searchInput {
+      flex-grow: 1;
+      padding: 14px 24px;
+      border: none;
+      background: transparent;
+      color: #e0f7e0;
+      font-size: 16px;
+      outline: none;
+    }
+    
+    #searchInput::placeholder {
+      color: #a0c0a0;
+    }
+    
+    #searchButton {
+      padding: 0 30px;
+      background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+      color: white;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    #searchButton:hover {
+      background: linear-gradient(135deg, #43A047 0%, #1B5E20 100%);
+    }
+    
+    .controls {
+      position: absolute;
+      top: 100px;
+      left: 40px;
+      background: rgba(15, 28, 15, 0.8);
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      z-index: 100;
+      width: 320px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(100, 200, 100, 0.2);
+    }
+    
+    .controls h2 {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #78ffd6;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .legend {
+      margin-top: 20px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 10px;
+      background: rgba(30, 50, 30, 0.5);
+    }
+    
+    .legend-color {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      margin-right: 15px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+    
+    .risk-high { background: linear-gradient(135deg, #ff416c, #ff4b2b); }
+    .risk-medium { background: linear-gradient(135deg, #ffd166, #ff9a3d); }
+    .risk-low { background: linear-gradient(135deg, #06d6a0, #118ab2); }
+    
+    .risk-display {
+      position: absolute;
+      top: 100px;
+      right: 40px;
+      background: rgba(15, 28, 15, 0.9);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      z-index: 100;
+      width: 340px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(100, 200, 100, 0.3);
+      transform: translateY(-20px);
+      opacity: 0;
+      transition: all 0.5s ease;
+    }
+    
+    .risk-display.visible {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    
+    .risk-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-align: center;
+      color: #78ffd6;
+    }
+    
+    .risk-value {
+      font-size: 52px;
+      font-weight: 800;
+      text-align: center;
+      margin: 25px 0;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    
+    .risk-high .risk-value { 
+      background: linear-gradient(to right, #ff416c, #ff4b2b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .risk-medium .risk-value { 
+      background: linear-gradient(to right, #ffd166, #ff9a3d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .risk-low .risk-value { 
+      background: linear-gradient(to right, #06d6a0, #118ab2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .risk-factors {
+      margin-top: 25px;
+    }
+    
+    .risk-factor {
+      padding: 12px 15px;
+      background: rgba(30, 50, 30, 0.6);
+      border-radius: 10px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      border-left: 4px solid #4CAF50;
+    }
+    
+    .risk-factor-name {
+      font-weight: 600;
+    }
+    
+    .risk-factor-value {
+      font-weight: 700;
+    }
+    
+    .risk-high .risk-factor-value { color: #ff6b6b; }
+    .risk-medium .risk-factor-value { color: #ffd166; }
+    .risk-low .risk-factor-value { color: #06d6a0; }
+    
+    .close-button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      color: #a0c0a0;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .close-button:hover {
+      background: rgba(255, 100, 100, 0.2);
+      color: #ff6b6b;
+      transform: rotate(90deg);
+    }
+    
+    .dashboard {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      z-index: 100;
+    }
+    
+    .metric-card {
+      background: rgba(15, 28, 15, 0.8);
+      border-radius: 16px;
+      padding: 20px 25px;
+      min-width: 200px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(100, 200, 100, 0.2);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .metric-value {
+      font-size: 36px;
+      font-weight: 700;
+      margin: 10px 0;
+    }
+    
+    .metric-high { color: #ff6b6b; }
+    .metric-medium { color: #ffd166; }
+    .metric-low { color: #06d6a0; }
+    
+    .metric-label {
+      font-size: 14px;
+      color: #a0c0a0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .watermark {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      color: rgba(160, 200, 160, 0.5);
+      font-size: 12px;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div id="cesiumContainer"></div>
+    
+    <div class="header">
+      <div class="logo">
+        <div class="logo-icon">
+          <i>🌍</i>
+        </div>
+        <div class="logo-text">GeoRisk Analyst</div>
+      </div>
+      
+      <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search for a city...">
+        <button id="searchButton">Analyze Risk</button>
+      </div>
+    </div>
+    
+    <div class="controls">
+      <h2><i>📊</i> Risk Level Legend</h2>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color risk-high"></div>
+          <div>High Risk</div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color risk-medium"></div>
+          <div>Medium Risk</div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color risk-low"></div>
+          <div>Low Risk</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="risk-display" id="riskDisplay">
+      <button class="close-button" id="closeRiskDisplay">×</button>
+      <div class="risk-title">Risk Assessment</div>
+      <div class="risk-value" id="riskValue">Low</div>
+      <div class="risk-factors">
+        <div class="risk-factor">
+          <span class="risk-factor-name">Natural Disasters</span>
+          <span class="risk-factor-value" id="disasterRisk">Low</span>
+        </div>
+        <div class="risk-factor">
+          <span class="risk-factor-name">Economic Stability</span>
+          <span class="risk-factor-value" id="econRisk">Medium</span>
+        </div>
+        <div class="risk-factor">
+          <span class="risk-factor-name">Political Climate</span>
+          <span class="risk-factor-value" id="polRisk">High</span>
+        </div>
+        <div class="risk-factor">
+          <span class="risk-factor-name">Infrastructure</span>
+          <span class="risk-factor-value" id="infraRisk">Medium</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="dashboard">
+      <div class="metric-card">
+        <div class="metric-label">Global Risk Index</div>
+        <div class="metric-value metric-medium">5.8</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Cities Analyzed</div>
+        <div class="metric-value metric-low">1,248</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">High Risk Areas</div>
+        <div class="metric-value metric-high">37</div>
+      </div>
+    </div>
+    
+    <div class="watermark">GeoRisk Analyst v2.0 | Real-time Global Risk Assessment</div>
+  </div>
+
+  <script>
+    // 🧭 Offline Geocoder for Cities
+    function CustomLocalGeocoder() {
+      this.name = "Offline Geocoder";
+    }
+
+    CustomLocalGeocoder.prototype.geocode = function (input) {
+      const locations = {
+        // Indian cities
+        delhi: { lat: 28.6139, lon: 77.209, risk: "high" },
+        mumbai: { lat: 19.076, lon: 72.8777, risk: "medium" },
+        kolkata: { lat: 22.5726, lon: 88.3639, risk: "high" },
+        bengaluru: { lat: 12.9716, lon: 77.5946, risk: "low" },
+        chennai: { lat: 13.0827, lon: 80.2707, risk: "medium" },
+        hyderabad: { lat: 17.385, lon: 78.4867, risk: "medium" },
+        pune: { lat: 18.5204, lon: 73.8567, risk: "low" },
+        ahmedabad: { lat: 23.0225, lon: 72.5714, risk: "medium" },
+        jaipur: { lat: 26.9124, lon: 75.7873, risk: "low" },
+        lucknow: { lat: 26.8467, lon: 80.9462, risk: "high" },
+        gurugram: { lat: 28.42428, lon: 77.062922, risk: "high" },
+        nakur: { lat: 29.89, lon: 77.5, risk: "low" },
+        
+        // International cities
+        tokyo: { lat: 35.6762, lon: 139.6503, risk: "low" },
+        newyork: { lat: 40.7128, lon: -74.006, risk: "medium" },
+        london: { lat: 51.5074, lon: -0.1278, risk: "low" },
+        paris: { lat: 48.8566, lon: 2.3522, risk: "medium" },
+        sydney: { lat: -33.8688, lon: 151.2093, risk: "low" },
+        beijing: { lat: 39.9042, lon: 116.4074, risk: "medium" },
+        moscow: { lat: 55.7558, lon: 37.6173, risk: "high" },
+        cairo: { lat: 30.0444, lon: 31.2357, risk: "high" },
+        rio: { lat: -22.9068, lon: -43.1729, risk: "medium" },
+        toronto: { lat: 43.6532, lon: -79.3832, risk: "low" }
+      };
+
+      const key = input.trim().toLowerCase();
+      if (locations[key]) {
+        const coords = locations[key];
+        return Promise.resolve([
+          {
+            displayName: key.charAt(0).toUpperCase() + key.slice(1),
+            destination: Cesium.Cartesian3.fromDegrees(coords.lon, coords.lat, 1000),
+            risk: coords.risk
+          }
+        ]);
+      }
+
+      return Promise.resolve([]);
+    };
+
+    // Initialize the globe
+    const viewer = new Cesium.Viewer("cesiumContainer", {
+      terrainProvider: new Cesium.EllipsoidTerrainProvider(),
+      animation: false,
+      timeline: false,
+      shouldAnimate: true,
+      geocoder: false,
+      infoBox: false,
+      baseLayerPicker: false,
+      navigationHelpButton: false,
+      homeButton: false,
+      sceneModePicker: false,
+      fullscreenButton: false
+    });
+    
+    // Set a nice starting position
+    viewer.camera.setView({
+      destination: Cesium.Cartesian3.fromDegrees(77.209, 28.6139, 20000000),
+      orientation: {
+        heading: Cesium.Math.toRadians(0),
+        pitch: Cesium.Math.toRadians(-90),
+        roll: 0.0
+      }
+    });
+    
+    // Add visual enhancements
+    viewer.scene.globe.enableLighting = true;
+    viewer.scene.fog.enabled = true;
+    viewer.scene.fog.density = 0.0001;
+    viewer.scene.fog.minimumBrightness = 0.01;
+    
+    // Create a star background
+    viewer.scene.skyBox = new Cesium.SkyBox({
+      sources: {
+        positiveX: 'https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Assets/Textures/SkyBox/tycho2t3_80_px.jpg',
+        negativeX: 'https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Assets/Textures/SkyBox/tycho2t3_80_mx.jpg',
+        positiveY: 'https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Assets/Textures/SkyBox/tycho2t3_80_py.jpg',
+        negativeY: 'https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Assets/Textures/SkyBox/tycho2t3_80_my.jpg',
+        positiveZ: 'https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Assets/Textures/SkyBox/tycho2t3_80_pz.jpg',
+        negativeZ: 'https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Assets/Textures/SkyBox/tycho2t3_80_mz.jpg'
+      }
+    });
+    
+    // Add lighting
+    viewer.scene.light = new Cesium.DirectionalLight({
+      direction: new Cesium.Cartesian3(0.5, 0.5, -1.0)
+    });
+
+    // Store the last added risk entity
+    let lastRiskEntity = null;
+    
+    // Function to display risk visualization
+    function showRiskVisualization(city, position, risk) {
+      // Remove previous risk visualization
+      if (lastRiskEntity) {
+        viewer.entities.remove(lastRiskEntity);
+      }
+      
+      // Determine color based on risk level
+      let riskColor;
+      switch(risk) {
+        case "high": riskColor = Cesium.Color.RED; break;
+        case "medium": riskColor = Cesium.Color.YELLOW; break;
+        case "low": riskColor = Cesium.Color.GREEN; break;
+        default: riskColor = Cesium.Color.WHITE;
+      }
+      
+      // Convert position to cartographic for coordinates
+      const cartographic = Cesium.Cartographic.fromCartesian(position);
+      const longitude = Cesium.Math.toDegrees(cartographic.longitude);
+      const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+      
+      // Create three lines at different heights to visualize risk
+      const heights = [50000, 100000, 150000];
+      
+      // Create the risk visualization entity
+      lastRiskEntity = viewer.entities.add({
+        name: `${city} Risk Visualization`,
+        position: position,
+        point: {
+          pixelSize: 20,
+          color: riskColor,
+          outlineColor: Cesium.Color.WHITE,
+          outlineWidth: 3
+        },
+        label: {
+          text: `${city} - ${risk.toUpperCase()} RISK`,
+          font: '18px sans-serif',
+          fillColor: Cesium.Color.WHITE,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 3,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          pixelOffset: new Cesium.Cartesian2(0, -40),
+          showBackground: true,
+          backgroundColor: new Cesium.Color(0.1, 0.1, 0.1, 0.7),
+          backgroundPadding: new Cesium.Cartesian2(15, 10)
+        },
+        polylines: heights.map(height => {
+          const positions = [];
+          // Create circle around the city
+          for (let i = 0; i <= 360; i++) {
+            const radians = Cesium.Math.toRadians(i);
+            const x = longitude + (0.5 * Math.cos(radians));
+            const y = latitude + (0.5 * Math.sin(radians));
+            positions.push(Cesium.Cartesian3.fromDegrees(x, y, height));
+          }
+          return {
+            positions: positions,
+            width: 5,
+            material: new Cesium.PolylineGlowMaterialProperty({
+              glowPower: 0.3,
+              color: riskColor.withAlpha(0.9)
+            })
+          };
+        })
+      });
+      
+      // Fly to the location
+      viewer.flyTo(lastRiskEntity, {
+        offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-45), 50000),
+        duration: 1.5
+      });
+      
+      // Show risk details panel
+      showRiskDetails(city, risk);
+    }
+    
+    // Function to show risk details
+    function showRiskDetails(city, risk) {
+      const riskDisplay = document.getElementById('riskDisplay');
+      const riskValue = document.getElementById('riskValue');
+      
+      // Set risk level
+      riskValue.textContent = risk.toUpperCase();
+      riskDisplay.className = `risk-display risk-${risk} visible`;
+      
+      // Set risk factors based on risk level
+      const factors = {
+        disasterRisk: "",
+        econRisk: "",
+        polRisk: "",
+        infraRisk: ""
+      };
+      
+      switch(risk) {
+        case "high":
+          factors.disasterRisk = "High";
+          factors.econRisk = "Unstable";
+          factors.polRisk = "Volatile";
+          factors.infraRisk = "Poor";
+          break;
+        case "medium":
+          factors.disasterRisk = "Medium";
+          factors.econRisk = "Moderate";
+          factors.polRisk = "Stable";
+          factors.infraRisk = "Adequate";
+          break;
+        case "low":
+          factors.disasterRisk = "Low";
+          factors.econRisk = "Strong";
+          factors.polRisk = "Very Stable";
+          factors.infraRisk = "Excellent";
+          break;
+      }
+      
+      // Update factor displays
+      document.getElementById('disasterRisk').textContent = factors.disasterRisk;
+      document.getElementById('econRisk').textContent = factors.econRisk;
+      document.getElementById('polRisk').textContent = factors.polRisk;
+      document.getElementById('infraRisk').textContent = factors.infraRisk;
+    }
+    
+    // Setup search functionality
+    document.getElementById('searchButton').addEventListener('click', function() {
+      const input = document.getElementById('searchInput').value;
+      if (!input) return;
+      
+      const geocoder = new CustomLocalGeocoder();
+      geocoder.geocode(input).then(results => {
+        if (results.length > 0) {
+          const result = results[0];
+          showRiskVisualization(result.displayName, result.destination, result.risk);
+        } else {
+          alert("City not found. Try: Delhi, Mumbai, Kolkata, Bengaluru, Chennai, Tokyo, NewYork, London, etc.");
+        }
+      });
+    });
+    
+    // Press Enter to search
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        document.getElementById('searchButton').click();
+      }
+    });
+    
+    // Close risk display
+    document.getElementById('closeRiskDisplay').addEventListener('click', function() {
+      document.getElementById('riskDisplay').classList.remove('visible');
+    });
+    
+    // Add some random risk indicators for demonstration
+    setTimeout(() => {
+      const cities = [
+        { name: "Tokyo", lon: 139.6503, lat: 35.6762, risk: "low" },
+        { name: "New York", lon: -74.006, lat: 40.7128, risk: "medium" },
+        { name: "Cairo", lon: 31.2357, lat: 30.0444, risk: "high" }
+      ];
+      
+      cities.forEach(city => {
+        viewer.entities.add({
+          position: Cesium.Cartesian3.fromDegrees(city.lon, city.lat),
+          point: {
+            pixelSize: 10,
+            color: city.risk === "high" ? Cesium.Color.RED : 
+                   city.risk === "medium" ? Cesium.Color.YELLOW : Cesium.Color.GREEN,
+            outlineColor: Cesium.Color.WHITE,
+            outlineWidth: 2
+          }
+        });
+      });
+    }, 2000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cesium Flight + Offline Search</title>
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
+
+
+  <style>
+    html, body, #cesiumContainer {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    #flyToCoordsBtn {
+  position: absolute;
+  top: 70px;
+  left: 20px;
+  padding: 10px 15px;
+  font-size: 16px;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+#flyToCoordsBtn:hover {
+  background-color: #059669;
+}
+
+
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <button id="flyToCoordsBtn">Fly to Coordinates</button>
+
+
+  <script>
+    // 🧭 Offline Geocoder for 10 Cities
+    function CustomLocalGeocoder() {
+      this.name = "Offline Geocoder";
+    }
+
+    CustomLocalGeocoder.prototype.geocode = function (input) {
+      const locations = {
+        "delhi": { lat: 28.6139, lon: 77.2090 },
+        "mumbai": { lat: 19.0760, lon: 72.8777 },
+        "kolkata": { lat: 22.5726, lon: 88.3639 },
+        "bengaluru": { lat: 12.9716, lon: 77.5946 },
+        "chennai": { lat: 13.0827, lon: 80.2707 },
+        "hyderabad": { lat: 17.3850, lon: 78.4867 },
+        "pune": { lat: 18.5204, lon: 73.8567 },
+        "ahmedabad": { lat: 23.0225, lon: 72.5714 },
+        "jaipur": { lat: 26.9124, lon: 75.7873 },
+        "lucknow": { lat: 26.8467, lon: 80.9462 },
+        "gurugram":{lat: 28.42428,lon: 77.062922},
+        "nakur":{lat:29.89,lon:	77.50}
+        
+      };
+
+      const key = input.trim().toLowerCase();
+      if (locations[key]) {
+        const coords = locations[key];
+        return Promise.resolve([
+          {
+            displayName: key.charAt(0).toUpperCase() + key.slice(1),
+            destination: Cesium.Cartesian3.fromDegrees(coords.lon, coords.lat)
+          }
+        ]);
+      }
+
+      return Promise.resolve([]);
+    };
+
+    const viewer = new Cesium.Viewer('cesiumContainer', {
+      terrainProvider: new Cesium.EllipsoidTerrainProvider(),
+      animation: true,
+      timeline: true,
+      shouldAnimate: true,
+      geocoder: new CustomLocalGeocoder()
+    });
+
+    // ✈️ Flight Path Animation
+    const cities = [
+      { name: "Mumbai", lon: 72.8777, lat: 19.0760, color: Cesium.Color.RED },
+      { name: "Dubai", lon: 55.2708, lat: 25.2048, color: Cesium.Color.YELLOW },
+      { name: "Paris", lon: 2.3522, lat: 48.8566, color: Cesium.Color.GREEN },
+      { name: "Toronto", lon: -79.3832, lat: 43.6532, color: Cesium.Color.ORANGE },
+      { name: "New York", lon: -74.0060, lat: 40.7128, color: Cesium.Color.BLUE },
+    ];
+
+    const property = new Cesium.SampledPositionProperty();
+    const startTime = Cesium.JulianDate.now();
+    const stopTime = Cesium.JulianDate.addSeconds(startTime, 60, new Cesium.JulianDate());
+
+    viewer.clock.startTime = startTime.clone();
+    viewer.clock.stopTime = stopTime.clone();
+    viewer.clock.currentTime = startTime.clone();
+    viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+    viewer.clock.multiplier = 1;
+
+    const totalPoints = cities.length;
+    for (let i = 0; i < totalPoints; i++) {
+      const time = Cesium.JulianDate.addSeconds(startTime, (60 / (totalPoints - 1)) * i, new Cesium.JulianDate());
+      const height = 10000 + 5000 * Math.sin(Math.PI * i / (totalPoints - 1));
+      const position = Cesium.Cartesian3.fromDegrees(cities[i].lon, cities[i].lat, height);
+      property.addSample(time, position);
+    }
+
+    const airplane = viewer.entities.add({
+      availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
+        start: startTime,
+        stop: stopTime
+      })]),
+      position: property,
+      orientation: new Cesium.VelocityOrientationProperty(property),
+      model: {
+  uri: "https://cesium.com/downloads/cesiumjs/releases/1.114/Apps/SampleData/models/CesiumAir/Cesium_Air.glb",
+  scale: 1.5,
+  minimumPixelSize: 64,
+},
+      path: {
+        resolution: 1,
+        material: new Cesium.PolylineGlowMaterialProperty({
+          glowPower: 0.2,
+          color: Cesium.Color.CYAN
+        }),
+        width: 10
+      }
+    });
+
+    // 📍 City Markers
+    cities.forEach((city, i) => {
+      const height = 10000 + 5000 * Math.sin(Math.PI * i / (cities.length - 1));
+      viewer.entities.add({
+        name: city.name,
+        position: Cesium.Cartesian3.fromDegrees(city.lon, city.lat, height),
+        point: { pixelSize: 10, color: city.color },
+        description: `${city.name}, ${city.lat.toFixed(2)}°, ${city.lon.toFixed(2)}°`
+      });
+    });
+
+    // 🖱 Click Entity Info
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    handler.setInputAction(function (movement) {
+      const picked = viewer.scene.pick(movement.position);
+      if (Cesium.defined(picked) && picked.id && picked.id.description) {
+        viewer.selectedEntity = picked.id;
+      }
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    // ⌨️ Keyboard Navigation
+    document.addEventListener('keydown', function (e) {
+      const moveRate = 100000.0;
+      const camera = viewer.camera;
+
+      switch (e.key) {
+        case 'ArrowUp':
+        case 'w':
+        case 'W':
+          camera.moveForward(moveRate);
+          break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          camera.moveBackward(moveRate);
+          break;
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+          camera.moveLeft(moveRate);
+          break;
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+          camera.moveRight(moveRate);
+          break;
+        case 'q':
+        case 'Q':
+          camera.moveUp(moveRate);
+          break;
+        case 'e':
+        case 'E':
+          camera.moveDown(moveRate);
+          break;
+      }
+    });
+
+    // 📌 Fly to India
+    document.getElementById("flyToCoordsBtn").addEventListener("click", () => {
+  const lat = parseFloat(prompt("Enter Latitude:", "28.5587"));
+  const lon = parseFloat(prompt("Enter Longitude:", "77.6877"));
+
+  if (!isNaN(lat) && !isNaN(lon)) {
+    viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(lon, lat, 15000),
+      orientation: {
+        heading: Cesium.Math.toRadians(0),
+        pitch: Cesium.Math.toRadians(-35),
+        roll: 0
+      },
+      duration: 3
+    });
+  } else {
+    alert("Invalid coordinates. Please enter numeric values.");
+  }
+});
+
+
+    viewer.zoomTo(viewer.entities);
+  </script>
+</body>
+</html>
